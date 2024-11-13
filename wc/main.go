@@ -4,14 +4,32 @@ import (
 	"fmt"
 	"log"
 	"os"
+    "bufio"
 )
 
-func count_bytes(filename string) int {
+func countBytes(filename string) int {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("Error reading file %v: %v", filename, err)
 	}
 	return len(data)
+}
+
+func countLines(filename string) int {
+    f, err := os.Open(filename)
+    if err != nil {
+        fmt.Errorf("Error: opening file %v: %v", filename, err)
+    }
+    defer f.Close()
+    scanner := bufio.NewScanner(f)
+    linesCount := 0
+    for scanner.Scan() {
+        linesCount++
+    }
+    if err = scanner.Err(); err != nil {
+        log.Fatalln(err)
+    } 
+    return linesCount
 }
 
 func main() {
@@ -25,8 +43,11 @@ func main() {
 
 	switch option {
 	case "-c":
-		result := count_bytes(filename)
+		result := countBytes(filename)
 		fmt.Println(result, filename)
+    case "-l":
+        result := countLines(filename)
+        fmt.Println(result, filename)
 	default:
 		log.Fatalf("Error: option %v not found", option)
 	}
