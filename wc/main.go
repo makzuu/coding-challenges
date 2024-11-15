@@ -1,95 +1,48 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 )
 
-func countBytes(filename string) int {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		log.Fatalf("Error reading file %v: %v", filename, err)
-	}
-	return len(data)
-}
-
-func countLines(filename string) int {
-	f, err := os.Open(filename)
-	if err != nil {
-		fmt.Errorf("Error: opening file %v: %v", filename, err)
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	linesCount := 0
-	for scanner.Scan() {
-		linesCount++
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatalln(err)
-	}
-	return linesCount
-}
-
-func countWords(filename string) int {
-	f, err := os.Open(filename)
-	if err != nil {
-		fmt.Errorf("Error: opening file %v: %v", filename, err)
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	scanner.Split(bufio.ScanWords)
-	wordsCount := 0
-	for scanner.Scan() {
-		wordsCount++
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatalln(err)
-	}
-	return wordsCount
-}
-
-func countChars(filename string) int {
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	scanner.Split(bufio.ScanRunes)
-	charCount := 0
-	for scanner.Scan() {
-		charCount++
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	return charCount
+func usage() {
+	fmt.Println("usage: ./wc [options...] filename")
+	os.Exit(1)
 }
 
 func main() {
 	args := os.Args[1:]
-	if len(args) != 2 {
-		log.Fatalln("Error: 2 arguments expected: option, filename.")
+	if len(args) == 0 {
+		usage()
 	}
 
-	option := args[0]
-	filename := args[1]
+	if len(args) == 1 {
+		filename := args[0]
+		lineCount, wordCount, byteCount := defaultOption(filename)
+		fmt.Println(lineCount, wordCount, byteCount, filename)
+		os.Exit(0)
+	}
+
+	var option, filename string
+	if len(args) == 2 {
+		option = args[0]
+		filename = args[1]
+	}
 
 	switch option {
 	case "-c":
-		result := countBytes(filename)
-		fmt.Println(result, filename)
+		byteCount := countBytes(filename)
+		fmt.Println(byteCount, filename)
 	case "-l":
-		result := countLines(filename)
-		fmt.Println(result, filename)
+		lineCount := countLines(filename)
+		fmt.Println(lineCount, filename)
 	case "-w":
-		result := countWords(filename)
-		fmt.Println(result, filename)
+		wordCount := countWords(filename)
+		fmt.Println(wordCount, filename)
 	case "-m":
-		result := countChars(filename)
-		fmt.Println(result, filename)
+		charCount := countChars(filename)
+		fmt.Println(charCount, filename)
 	default:
 		log.Fatalf("Error: option %v not found", option)
 	}
