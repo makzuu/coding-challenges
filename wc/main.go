@@ -50,6 +50,24 @@ func countWords(filename string) int {
 	return wordsCount
 }
 
+func countChars(filename string) int {
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanRunes)
+	charCount := 0
+	for scanner.Scan() {
+		charCount++
+	}
+	if err = scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return charCount
+}
+
 func main() {
 	args := os.Args[1:]
 	if len(args) != 2 {
@@ -68,6 +86,9 @@ func main() {
 		fmt.Println(result, filename)
 	case "-w":
 		result := countWords(filename)
+		fmt.Println(result, filename)
+	case "-m":
+		result := countChars(filename)
 		fmt.Println(result, filename)
 	default:
 		log.Fatalf("Error: option %v not found", option)
