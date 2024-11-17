@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-type countFunc func (string) int
+type countFunc func(string) int
 
 func countBytes(filename string) int {
 	data, err := os.ReadFile(filename)

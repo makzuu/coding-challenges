@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 	"slices"
+	"strconv"
+	"strings"
 )
 
 func usage() {
@@ -31,23 +32,25 @@ func handleArgs(args []string) ([]string, []rune) {
 func main() {
 	files, options := handleArgs(os.Args[1:])
 
-	supportedOptions := []struct{ 
+	supportedOptions := []struct {
 		opt rune
-		f countFunc
+		f   countFunc
 	}{
-		{ opt: 'l', f: countLines },
-		{ opt: 'w', f: countWords },
-		{ opt: 'm', f: countChars },
-		{ opt: 'c', f: countBytes },
+		{opt: 'l', f: countLines},
+		{opt: 'w', f: countWords},
+		{opt: 'm', f: countChars},
+		{opt: 'c', f: countBytes},
 	}
-	
+
 	for _, filename := range files {
 		var counts []string
 		for _, opt := range supportedOptions {
 			if slices.Contains(options, opt.opt) {
-				counts = append(counts, string(opt.f(filename)))
+				count := opt.f(filename)
+				strCount := strconv.Itoa(count)
+				counts = append(counts, strCount)
 			}
 		}
-		fmt.Println(strings.Join(counts, " ") + filename)
+		fmt.Println(strings.Join(counts, " "), filename)
 	}
 }
