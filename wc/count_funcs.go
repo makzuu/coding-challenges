@@ -2,78 +2,123 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
+	"strings"
+	"unicode"
 )
 
 type countFunc func(string) int
 
-func countBytes(filename string) int {
-	data, err := os.ReadFile(filename)
+func count(filename string, sf bufio.SplitFunc) int {
+	f, err := os.Open(filename)
 	if err != nil {
-		log.Fatalf("Error reading file %v: %v", filename, err)
+		log.Fatal(err)
 	}
-	return len(data)
+	defer f.Close()
+	sc := bufio.NewScanner(f)
+	sc.Split(sf)
+	cnt := 0
+	for sc.Scan() {
+		cnt++
+	}
+	if err := sc.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return cnt
+}
+
+func countBytes(filename string) int {
+	if filename == "" {
+		return countBytesFromStdin()
+	}
+	return count(filename, bufio.ScanBytes)
 }
 
 func countLines(filename string) int {
-	f, err := os.Open(filename)
-	if err != nil {
-		fmt.Errorf("Error: opening file %v: %v", filename, err)
+	if filename == "" {
+		return countLinesFromStdin()
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	linesCount := 0
-	for scanner.Scan() {
-		linesCount++
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatalln(err)
-	}
-	return linesCount
+	return count(filename, bufio.ScanLines)
 }
 
 func countWords(filename string) int {
-	f, err := os.Open(filename)
-	if err != nil {
-		fmt.Errorf("Error: opening file %v: %v", filename, err)
+	if filename == "" {
+		return countWordsFromStdin()
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	scanner.Split(bufio.ScanWords)
-	wordsCount := 0
-	for scanner.Scan() {
-		wordsCount++
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatalln(err)
-	}
-	return wordsCount
+	return count(filename, bufio.ScanWords)
 }
 
 func countChars(filename string) int {
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
+	if filename == "" {
+		return countCharsFromStdin()
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	scanner.Split(bufio.ScanRunes)
+	return count(filename, bufio.ScanRunes)
+}
+
+var fileContent []byte
+
+func getLinesFromStdin() {
+	if len(fileContent) > 0 {
+		return
+	}
+
+	sc := bufio.NewScanner(os.Stdin)
+	sc.Split(bufio.ScanBytes)
+
+	for sc.Scan() {
+		fileContent = append(fileContent, sc.Bytes()...)
+	}
+	if err := sc.Err(); err != nil {
+		log.Fatalf("error while reading from stdin: %s", err)
+	}
+}
+
+func countBytesFromStdin() int {
+	getLinesFromStdin()
+	return len(fileContent)
+}
+
+func countLinesFromStdin() int {
+	getLinesFromStdin()
+	s := string(fileContent)
+	s = strings.TrimSuffix(s, "\n")
+	lines := strings.Split(s, "\n")
+	return len(lines)
+}
+
+func countWordsFromStdin() int {
+	getLinesFromStdin()
+	s := string(fileContent)
+
+	wordCount := 0
+	inWord := false
+	for _, v := range s {
+		if unicode.IsSpace(v) {
+			if inWord {
+				wordCount++
+			}
+			inWord = false
+		} else {
+			inWord = true
+		}
+	}
+
+	return wordCount
+}
+
+func countCharsFromStdin() int {
+	getLinesFromStdin()
+	s := string(fileContent)
 	charCount := 0
-	for scanner.Scan() {
+	for _, _ = range s {
 		charCount++
-	}
-	if err = scanner.Err(); err != nil {
-		log.Fatal(err)
 	}
 	return charCount
 }
 
-func defaultOption(filename string) (int, int, int) {
-	lineCount := countLines(filename)
-	wordCount := countWords(filename)
-	byteCount := countBytes(filename)
-
-	return lineCount, wordCount, byteCount
+func defaultOptions(f *file) {
+	f.counts["lines"] = countLines(f.filename)
+	f.counts["words"] = countWords(f.filename)
+	f.counts["bytes"] = countBytes(f.filename)
 }

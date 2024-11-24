@@ -2,20 +2,19 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"slices"
-	"strconv"
 	"strings"
 )
 
-func usage() {
-	fmt.Println("usage: ./wc [options...] filename")
-	os.Exit(1)
+type file struct {
+	filename string
+	counts   map[string]int
 }
 
-func handleArgs(args []string) ([]string, []rune) {
+func handleArgs(args []string) ([]file, []rune) {
 	var options []rune
-	var files []string
+	var files []file
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "-") {
 			arg = strings.Trim(arg, "-")
@@ -23,34 +22,62 @@ func handleArgs(args []string) ([]string, []rune) {
 				options = append(options, r)
 			}
 		} else {
-			files = append(files, arg)
+			files = append(files, file{filename: arg, counts: make(map[string]int)})
 		}
 	}
 	return files, options
 }
 
+func printResults(files []file) {
+	count := ""
+	for _, file := range files {
+		if v, ok := file.counts["lines"]; ok {
+			count += fmt.Sprintf("%d ", v)
+		}
+		if v, ok := file.counts["words"]; ok {
+			count += fmt.Sprintf("%d ", v)
+		}
+		if v, ok := file.counts["bytes"]; ok {
+			count += fmt.Sprintf("%d ", v)
+		}
+		if v, ok := file.counts["chars"]; ok {
+			count += fmt.Sprintf("%d ", v)
+		}
+		count += fmt.Sprintf("%s\n", file.filename)
+	}
+	fmt.Print(count)
+}
+
 func main() {
 	files, options := handleArgs(os.Args[1:])
 
-	supportedOptions := []struct {
-		opt rune
-		f   countFunc
-	}{
-		{opt: 'l', f: countLines},
-		{opt: 'w', f: countWords},
-		{opt: 'm', f: countChars},
-		{opt: 'c', f: countBytes},
+	if len(files) == 0 {
+		files = append(files, file{filename: "", counts: make(map[string]int)})
 	}
 
-	for _, filename := range files {
-		var counts []string
-		for _, opt := range supportedOptions {
-			if slices.Contains(options, opt.opt) {
-				count := opt.f(filename)
-				strCount := strconv.Itoa(count)
-				counts = append(counts, strCount)
+	if len(options) > 0 {
+		for _, file := range files {
+			for _, opt := range options {
+				switch opt {
+				case 'l':
+					file.counts["lines"] = countLines(file.filename)
+				case 'w':
+					file.counts["words"] = countWords(file.filename)
+				case 'c':
+					file.counts["bytes"] = countBytes(file.filename)
+				case 'm':
+					file.counts["chars"] = countChars(file.filename)
+				default:
+					log.Printf("%c is not available option", opt)
+				}
 			}
 		}
-		fmt.Println(strings.Join(counts, " "), filename)
+		printResults(files)
+
+	} else {
+		for _, file := range files {
+			defaultOptions(&file)
+		}
+		printResults(files)
 	}
 }
