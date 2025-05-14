@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
 
 #define MAX_FILENAME_LEN 100
 
@@ -74,6 +75,33 @@ int main(int argc, char *argv[]) {
 	files_len++;
     }
 
+    for (int i = 0; i < files_len; i++) {
+	FILE *f = fopen(files[i], "r");
+	if (f == NULL) {
+	    if (errno == ENOENT) {
+		printf("cut: No such file -- '%s'\n", files[i]);
+		exit(4);
+	    }
+	    perror("fopen");
+	    exit(4);
+	}
+
+	for (int j = 0; j < options_len; j++) {
+	    switch (options[j].opt) {
+		case 'f':
+		    int index = 0;
+		    if (!todigit(options[j].optarg)) {
+			printf("cut: invalid field value '%c'\n", options[j].opt);
+			exit(5);
+		    }
+		    fields(index, f);
+		    break;
+	    }
+	}
+	
+	fclose(f);
+    }
+
     return 0;
 }
 
@@ -88,5 +116,18 @@ bool todigit(char *c, int *result) {
     return true;
 }
 
-void fields(int index, char *filename) {
+#define MAX_LINE_LEN 500
+
+void fields(int index, FILE *filename) {
+    char *buf = malloc(MAX_LINE_LEN);
+    char c = 0;
+    int idx = 0;
+    for (; (c = fread(buf, 1, 1, f)); idx++) {
+	if (c == '\n') {
+	}
+    }
+    if (ferror(f)) {
+	printf("cut: error while reading file\n");
+	exit(6);
+    }
 }
