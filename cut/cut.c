@@ -8,7 +8,7 @@
 #define MAX_FILENAME_LEN 100
 
 bool todigit(char *c, int *result);
-void fields(int index, char *filename);
+void fields(int index, FILE *f);
 
 struct option {
     char opt;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 	    switch (options[j].opt) {
 		case 'f':
 		    int index = 0;
-		    if (!todigit(options[j].optarg)) {
+		    if (!todigit(options[j].optarg, &index)) {
 			printf("cut: invalid field value '%c'\n", options[j].opt);
 			exit(5);
 		    }
@@ -118,14 +118,26 @@ bool todigit(char *c, int *result) {
 
 #define MAX_LINE_LEN 500
 
-void fields(int index, FILE *filename) {
-    char *buf = malloc(MAX_LINE_LEN);
+void fields(int index, FILE *f) {
+    char *line = malloc(MAX_LINE_LEN);
     char c = 0;
     int idx = 0;
-    for (; (c = fread(buf, 1, 1, f)); idx++) {
+    while (fread(&c, 1, 1, f)) {
 	if (c == '\n') {
+	    line[idx] = '\0';
+	    idx = 0;
+	    printf("%s\n", line);
+	} else {
+	    if (idx == MAX_LINE_LEN - 1) {
+		printf("cut: max number of characters per line exceded\n");
+		exit(6);
+	    }
+	    line[idx++] = c;
 	}
     }
+    line[idx] = '\0';
+    printf("%s\n", line);
+	
     if (ferror(f)) {
 	printf("cut: error while reading file\n");
 	exit(6);
