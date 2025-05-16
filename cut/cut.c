@@ -5,6 +5,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "dinamic_list.h"
+
 #define MAX_FILENAME_LEN 100
 
 bool todigit(char *c, int *result);
@@ -16,31 +18,21 @@ struct option {
 };
 
 int main(int argc, char *argv[]) {
-    int options_cap = 0;
-    int options_len = 0;
-    struct option *options = NULL;
-
-    int files_cap = 0;
-    int files_len = 0;
-    char **files = NULL;
+    list_t *options_list = list_init();
 
     char *optstring = ":f:";
     int opt;
     while ((opt = getopt(argc, argv, optstring)) != -1) {
 	switch (opt) {
 	    case 'f':
-		if (options_len == options_cap) {
-		    options_cap += 10;
-		    if ((options = realloc(options, sizeof(struct option) * options_cap)) == NULL) {
-			printf("cut: could not initialize option list\n");
-			exit(3);
-		    }
+		struct option *opt = malloc(sizeof(struct option));
+		if (opt == NULL) {
+		    fprintf(stderr, "could not allocate more memory\n");
+		    exit(1);
 		}
-
-		options[options_len].opt = 'f';
-		options[options_len].optarg = optarg;
-
-		options_len++;
+		opt->opt = 'f';
+		opt->optarg = optarg;
+		list_append(options_list, opt);
 		break;
 	    case '?':
 		printf("cut: invalid option -- '%c'\n", optopt);
@@ -53,45 +45,32 @@ int main(int argc, char *argv[]) {
 	}
     }
 
+    list_t *files_list = list_init();
     for (; optind < argc; optind++) {
-	if (files_len == files_cap) {
-	    files_cap += 10;
-	    files = realloc(files, files_cap);
-	    if (files == NULL) {
-		printf("cut: could not initialize file list\n");
-		exit(3);
-	    }
-
-	    for (int i = files_len; i < files_cap; i++) {
-		files[i] = malloc(MAX_FILENAME_LEN);
-		if (files == NULL) {
-		    printf("cut: could not initialize file list\n");
-		    exit(3);
-		}
-	    }
-	}
-
-	strncpy(files[files_len], argv[optind], MAX_FILENAME_LEN);
-	files_len++;
+	char *fname = malloc(MAX_FILENAME_LEN);
+	strncpy(fname, argv[optind], MAX_FILENAME_LEN);
+	fname[MAX_FILENAME_LEN - 1] = '\0';
+	list_append(files_list, fname);
     }
 
-    for (int i = 0; i < files_len; i++) {
-	FILE *f = fopen(files[i], "r");
+    for (int i = 0; i < files_list->len; i++) {
+	FILE *f = fopen(files_list->items[i], "r");
 	if (f == NULL) {
 	    if (errno == ENOENT) {
-		printf("cut: No such file -- '%s'\n", files[i]);
+		printf("cut: No such file -- '%s'\n", (char *)files_list->items[i]);
 		exit(4);
 	    }
 	    perror("fopen");
 	    exit(4);
 	}
 
-	for (int j = 0; j < options_len; j++) {
-	    switch (options[j].opt) {
+	for (int j = 0; j < options_list->len; j++) {
+	    struct option *opt = options_list->items[j];
+	    switch (opt->opt) {
 		case 'f':
 		    int index = 0;
-		    if (!todigit(options[j].optarg, &index)) {
-			printf("cut: invalid field value '%c'\n", options[j].opt);
+		    if (!todigit(opt->optarg, &index)) {
+			printf("cut: invalid field value '%c'\n", opt->opt);
 			exit(5);
 		    }
 		    fields(index, f);
