@@ -11,6 +11,7 @@
 
 bool todigit(char *c, int *result);
 void fields(int index, FILE *f);
+void extract(char *line, int index);
 
 struct option {
     char opt;
@@ -81,6 +82,9 @@ int main(int argc, char *argv[]) {
 	fclose(f);
     }
 
+    list_destroy(files_list);
+    list_destroy(options_list);
+
     return 0;
 }
 
@@ -96,29 +100,61 @@ bool todigit(char *c, int *result) {
 }
 
 #define MAX_LINE_LEN 500
+#define BUF_LEN 500
 
 void fields(int index, FILE *f) {
-    char *line = malloc(MAX_LINE_LEN);
+    char *line_buf = malloc(MAX_LINE_LEN);
     char c = 0;
-    int idx = 0;
+    int i = 0;
     while (fread(&c, 1, 1, f)) {
 	if (c == '\n') {
-	    line[idx] = '\0';
-	    idx = 0;
-	    printf("%s\n", line);
+	    line_buf[i] = '\0';
+	    i = 0;
+	    extract(line_buf, index);
 	} else {
-	    if (idx == MAX_LINE_LEN - 1) {
+	    if (i == MAX_LINE_LEN) {
 		printf("cut: max number of characters per line exceded\n");
 		exit(6);
 	    }
-	    line[idx++] = c;
+	    line_buf[i++] = c;
 	}
     }
-    line[idx] = '\0';
-    printf("%s\n", line);
-	
+
     if (ferror(f)) {
 	printf("cut: error while reading file\n");
 	exit(6);
     }
+
+    if (i != 0) {
+	line_buf[i] = '\0';
+	extract(line_buf, index);
+    }
+	
+
+    free(line_buf);
+}
+
+void extract(char *line, int index) {
+    size_t line_len = strlen(line);
+    char *buf = malloc(line_len);
+    int buf_idx = 0;
+    int field_cnt = 1;
+    for (size_t i = 0; i < line_len; i++) {
+	if (line[i] != '\t') {
+	    buf[buf_idx++] = line[i];
+	} else {
+	    buf[buf_idx] = '\0';
+	    if (field_cnt == index) {
+		printf("%s\n", buf);
+	    }
+	    field_cnt++;
+	    buf_idx = 0;
+	}
+    }
+    if (buf_idx != 0 && field_cnt == index) {
+	buf[buf_idx] = '\0';
+	printf("%s\n", buf);
+    }
+
+    free(buf);
 }
