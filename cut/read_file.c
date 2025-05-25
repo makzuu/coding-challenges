@@ -93,5 +93,6 @@ void free_lines(lines_t *lines) {
     for (int i = 0; i < lines->len; i++) {
 	free(lines->lines[i]);
     }
+    free(lines->lines);
     free(lines);
 }
