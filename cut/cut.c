@@ -27,3 +27,13 @@ int main(int argc, char *argv[]) {
     free_files(&args->files);
     free_indexes(&args->indexes);
 }
+
+/*
+ * TODO: buscar bugs
+ * especialmente los que tengan que ver con memoria
+ *
+ * TODO: implementar el leer de standard input
+ *  - if no filename is provided *
+ *  - or if the single dash is provided ‘-’
+ * 
+ */
