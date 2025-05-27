@@ -1,19 +1,29 @@
 #include "read_file.h"
 #include "fields.h"
+#include "args.h"
+
 #include <stdio.h>
 
-#define INDEXES_LEN 2
+int main(int argc, char *argv[]) {
+    args_t *args = parse_args(argc, argv);
 
-int main(void) {
-    lines_t *lines = read_lines("sample.tsv");
-    int indexes[INDEXES_LEN] = { 1, 3 };
-    for (int i = 0; i < lines->len; i++) {
-	fields_t *flds = fields(indexes, INDEXES_LEN, lines->lines[i], '\t');
-	for (int j = 0; j < flds->len; j++) {
-	    printf("%s\t", flds->fields[j]);
+    for (int i = 0; i < args->files.len; i++) {
+	lines_t *lines = read_lines(args->files.items[i]);
+	for (int j = 0; j < lines->len; j++) {
+	    fields_t *fields = parse_fields(args->indexes.items, args->indexes.len,
+		    lines->lines[j], args->delimiter);
+	    for (int x = 0; x < fields->len; x++) {
+		printf("%s", fields->fields[x]);
+		if (x != fields->len - 1) {
+		    printf("%c", args->delimiter);
+		}
+	    }
+	    printf("\n");
+	    free_fields(fields);
 	}
-	free_fields(flds);
-	printf("\n");
+	free_lines(lines);
     }
-    free_lines(lines);
+
+    free_files(&args->files);
+    free_indexes(&args->indexes);
 }

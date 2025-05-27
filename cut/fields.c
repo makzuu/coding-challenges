@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-fields_t *fields(int *indexes, int indexes_len, char *line, char delimiter) {
+fields_t *parse_fields(int *indexes, int indexes_len, char *line, char delimiter) {
     fields_t *f = malloc(sizeof(fields_t));
     if (f == NULL) {
 	return NULL;
