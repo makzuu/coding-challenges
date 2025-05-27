@@ -35,5 +35,7 @@ int main(int argc, char *argv[]) {
  * TODO: implementar el leer de standard input
  *  - if no filename is provided *
  *  - or if the single dash is provided ‘-’
+ *
+ *  TODO: add tests
  * 
  */
