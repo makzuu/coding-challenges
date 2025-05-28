@@ -7,6 +7,27 @@
 int main(int argc, char *argv[]) {
     args_t *args = parse_args(argc, argv);
 
+    if (args->files.len == 0) {
+	files_append(&args->files, "-");
+    }
+
+#ifdef DEBUG
+    printf("files: ");
+    for (int i = 0; i < args->files.len; i++) {
+	printf("%s ", args->files.items[i]);
+    }
+    printf("\nindexes: ");
+    for (int i = 0; i < args->indexes.len; i++) {
+	printf("%d ", args->indexes.items[i]);
+    }
+    printf("\n");
+    if (args->delimiter == '\t') {
+	printf("delimiter: \\t\n");
+    } else {
+	printf("delimiter: %c\n", args->delimiter);
+    }
+#endif
+
     for (int i = 0; i < args->files.len; i++) {
 	lines_t *lines = read_lines(args->files.items[i]);
 	for (int j = 0; j < lines->len; j++) {
@@ -32,10 +53,6 @@ int main(int argc, char *argv[]) {
  * TODO: buscar bugs
  * especialmente los que tengan que ver con memoria
  *
- * TODO: implementar el leer de standard input
- *  - if no filename is provided *
- *  - or if the single dash is provided ‘-’
- *
- *  TODO: add tests
+ * TODO: add tests
  * 
  */

@@ -12,10 +12,14 @@ lines_t *read_lines(char *filename) {
     lines->len = 0;
     lines->lines = NULL;
 
-    FILE *f = fopen(filename, "r");
-    if (f == NULL) {
-	free(lines);
-	return NULL;
+    FILE *f = stdin;
+
+    if (strlen(filename) > 0 && filename[0] != '-') {
+	f = fopen(filename, "r");
+	if (f == NULL) {
+	    free(lines);
+	    return NULL;
+	}
     }
 
     int c = 0;
@@ -46,13 +50,14 @@ lines_t *read_lines(char *filename) {
 	}
 	buff[buff_idx] = '\0';
 	if (add_line(lines, buff) == NULL) {
-		free(lines);
-		fclose(f);
-		return NULL;
+	    free(lines);
+	    fclose(f);
+	    return NULL;
 	}
     }
 
     fclose(f);
+
     return lines;
 }
 
