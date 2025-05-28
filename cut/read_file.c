@@ -1,7 +1,9 @@
 #include "read_file.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 lines_t *read_lines(char *filename) {
     lines_t *lines = malloc(sizeof(lines_t));
@@ -28,7 +30,9 @@ lines_t *read_lines(char *filename) {
     while(fread(&c, 1, 1, f)) {
 	if (buff_idx == BUF_LEN) {
 	    free(lines);
-	    fclose(f);
+	    if (f != stdin) {
+		fclose(f);
+	    }
 	    return NULL;
 	}
 	if (c == '\n') {
@@ -36,6 +40,9 @@ lines_t *read_lines(char *filename) {
 	    buff_idx = 0;
 	    if (add_line(lines, buff) == NULL) {
 		free(lines);
+		if (f != stdin) {
+		    fclose(f);
+		}
 		return NULL;
 	    }
 	} else {
@@ -45,18 +52,24 @@ lines_t *read_lines(char *filename) {
     if (buff_idx != 0) {
 	if (buff_idx == BUF_LEN) {
 	    free(lines);
-	    fclose(f);
+	    if (f != stdin) {
+		fclose(f);
+	    }
 	    return NULL;
 	}
 	buff[buff_idx] = '\0';
 	if (add_line(lines, buff) == NULL) {
 	    free(lines);
-	    fclose(f);
+	    if (f != stdin) {
+		fclose(f);
+	    }
 	    return NULL;
 	}
     }
 
-    fclose(f);
+    if (f != stdin) {
+	fclose(f);
+    }
 
     return lines;
 }
@@ -95,9 +108,12 @@ char *add_line(lines_t *lines, char *line) {
 }
 
 void free_lines(lines_t *lines) {
-    for (int i = 0; i < lines->len; i++) {
-	free(lines->lines[i]);
+    assert(lines != NULL);
+    if (lines->lines != NULL) {
+	for (int i = 0; i < lines->len; i++) {
+	    free(lines->lines[i]);
+	}
+	free(lines->lines);
     }
-    free(lines->lines);
     free(lines);
 }

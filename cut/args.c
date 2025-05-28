@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 
 int parse_indexes(char *indexes) {
     static int i = 0;
@@ -41,20 +42,27 @@ args_t *parse_args(int argc, char *argv[]) {
 	    case 'f':
 		int index = 0;
 		while (index = parse_indexes(optarg)) {
-		    indexes_append(&args->indexes, index);
+		    if (indexes_append(&args->indexes, index) == -1) {
+			free(args);
+			return NULL;
+		    }
 		}
 		break;
 	    case 'd':
 		args->delimiter = *optarg;
 		break;
 	    case 1:
-		files_append(&args->files, optarg);
+		if (files_append(&args->files, optarg) == NULL) {
+		    free(args);
+		    return NULL;
+		}
 		break;
 	    case '?':
-		fprintf(stderr, "unknown option %c\n", optopt);
+		fprintf(stderr, "cut: unknown option -- %c\n", optopt);
+		return NULL;
 		break;
 	    case ':':
-		fprintf(stderr, "option requires an argument %c\n", optopt);
+		fprintf(stderr, "cut: option requires an argument -- %c\n", optopt);
 		return NULL;
 		break;
 	}
@@ -84,15 +92,6 @@ char *files_append(file_list_t *files, char *filename) {
     return tmp;
 }
 
-void free_files(file_list_t *files) {
-    if (files->items != NULL) {
-	for (int i = 0; i < files->len; i++) {
-	    free(files->items[i]);
-	}
-    }
-}
-
-
 int indexes_append(index_list_t *indexes, int item) {
     int new_len = indexes->len + 1;
     indexes->items = realloc(indexes->items, new_len * sizeof(int));
@@ -107,8 +106,16 @@ int indexes_append(index_list_t *indexes, int item) {
     return indexes->len - 1;
 }
 
-void free_indexes(index_list_t *indexes) {
-    if (indexes->items != NULL) {
-	free(indexes->items);
+void free_arguments(args_t *args) {
+    assert(args != NULL);
+    if (args->files.items != NULL) {
+	for (int i = 0; i < args->files.len; i++) {
+	    free(args->files.items[i]);
+	}
+	free(args->files.items);
     }
+    if (args->indexes.items != NULL) {
+	free(args->indexes.items);
+    }
+    free(args);
 }

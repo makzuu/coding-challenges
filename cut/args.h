@@ -22,8 +22,7 @@ typedef struct {
 int parse_indexes(char *indexes);
 args_t *parse_args(int argc, char *argv[]);
 char *files_append(file_list_t *files, char *filename);
-void free_files(file_list_t *files);
 int indexes_append(index_list_t *indexes, int item);
-void free_indexes(index_list_t *indexes);
+void free_arguments(args_t *args);
 
 #endif

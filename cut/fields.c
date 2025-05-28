@@ -1,6 +1,8 @@
 #include "fields.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 fields_t *parse_fields(int *indexes, int indexes_len, char *line, char delimiter) {
     fields_t *f = malloc(sizeof(fields_t));
@@ -64,9 +66,12 @@ char *add_field(fields_t *f, int *indexes, int indexes_len, char *buff, int cur_
 }
 
 void free_fields(fields_t *fields) {
-    for (int i = 0; i < fields->len; i++) {
-	free(fields->fields[i]);
+    assert(fields != NULL);
+    if (fields->fields != NULL) {
+	for (int i = 0; i < fields->len; i++) {
+	    free(fields->fields[i]);
+	}
+	free(fields->fields);
     }
-    free(fields->fields);
     free(fields);
 }

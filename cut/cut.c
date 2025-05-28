@@ -6,6 +6,10 @@
 
 int main(int argc, char *argv[]) {
     args_t *args = parse_args(argc, argv);
+    if (args == NULL) {
+	fprintf(stderr, "could not parse args\n");
+	return 69;
+    }
 
     if (args->files.len == 0) {
 	files_append(&args->files, "-");
@@ -30,9 +34,17 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < args->files.len; i++) {
 	lines_t *lines = read_lines(args->files.items[i]);
+	if (lines == NULL) {
+	    fprintf(stderr, "could not read file -- %s\n", args->files.items[i]);
+	    return 69;
+	}
 	for (int j = 0; j < lines->len; j++) {
 	    fields_t *fields = parse_fields(args->indexes.items, args->indexes.len,
 		    lines->lines[j], args->delimiter);
+	    if (fields == NULL) {
+		fprintf(stderr, "error extracting fields\n");
+		return 69;
+	    }
 	    for (int x = 0; x < fields->len; x++) {
 		printf("%s", fields->fields[x]);
 		if (x != fields->len - 1) {
@@ -45,8 +57,7 @@ int main(int argc, char *argv[]) {
 	free_lines(lines);
     }
 
-    free_files(&args->files);
-    free_indexes(&args->indexes);
+    free_arguments(args);
 }
 
 /*
