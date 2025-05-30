@@ -4,10 +4,17 @@
 
 #include <stdio.h>
 
+#define DEBUG
+
 int main(int argc, char *argv[]) {
     args_t *args = parse_args(argc, argv);
     if (args == NULL) {
 	fprintf(stderr, "could not parse args\n");
+	return 69;
+    }
+
+    if (args->indexes.len == 0) {
+	fprintf(stderr, "cut: you must specify a list of fields\n");
 	return 69;
     }
 
@@ -59,11 +66,3 @@ int main(int argc, char *argv[]) {
 
     free_arguments(args);
 }
-
-/*
- * TODO: buscar bugs
- * especialmente los que tengan que ver con memoria
- *
- * TODO: add tests
- * 
- */
